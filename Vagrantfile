@@ -14,7 +14,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define :wepapp do |wepapp_config|
     # Map dev.pyrocms.mysql to this IP
     #config.vm.network :hostonly, "198.18.0.201"
-    wepapp_config.vm.network :forwarded_port, guest: 8080, host: 8080
+    wepapp_config.vm.network :forwarded_port, guest: 8080, host: 8180
     # Enable Puppet
     wepapp_config.vm.provision :puppet do |puppet|
       puppet.facter = {
@@ -22,8 +22,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         "hostname" => "wepapp",
         "docroot" => '/vagrant/www/'
       }
-      puppet.manifest_file = "default.pp"
-      puppet.manifests_path = "misc/recipes/manifests"
+      puppet.manifest_file  = "default.pp"
+      puppet.manifests_path = "recipes/manifests"
+      puppet.module_path    = 'recipes/modules'
     end
   end
 end

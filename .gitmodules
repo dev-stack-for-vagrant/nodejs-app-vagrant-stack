@@ -1,0 +1,9 @@
+[submodule "recipes/modules/apt"]
+	path = recipes/modules/apt
+	url = https://github.com/puppetlabs/puppetlabs-apt.git
+[submodule "recipes/modules/stdlib"]
+	path = recipes/modules/stdlib
+	url = https://github.com/puppetlabs/puppetlabs-stdlib.git
+[submodule "recipes/modules/nodejs"]
+	path = recipes/modules/nodejs
+	url = https://github.com/puppetlabs/puppetlabs-nodejs.git

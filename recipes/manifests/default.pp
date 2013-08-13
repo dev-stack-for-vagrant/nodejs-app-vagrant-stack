@@ -4,11 +4,11 @@ $user_bash_prefix = "sudo -u ${user} -H bash -l -c"
 $root_bash_prefix = 'sudo -H bash -l -c'
 
 Exec {
-  path => ['/usr/sbin', '/usr/bin', '/sbin', '/bin']
+  path => ['/usr/sbin', '/usr/bin', '/sbin', '/bin', '/usr/local/bin']
 }
 
-# --- Preinstall Stage --------------------------------------------------------
-stage { 'preinstall':
+# --- Pre-update Stage --------------------------------------------------------
+stage { 'pre_update':
   before => Stage['main']
 }
 
@@ -23,39 +23,27 @@ class apt_get_update {
 }
 
 class { 'apt_get_update':
-  stage => preinstall
+  stage => ['pre_update']
 }
 
-# --- Install Basic Packages --------------------------------------------------------
-stage { 'install_basic_packages':
+# --- Pre-install Packages ----------------------------------------------------
+stage { 'pre_install_packages':
   before => Stage['main'],
-  require => Stage['preinstall']
+  require => Stage['pre_update']
 }
 
-class install_basic_packages {
-  package { ['vim', 'curl', 'zsh', 'git', 'wget', 'python-dev', 'python-pip', 'nodejs']:
+class pre_install_packages {
+  package { [ 'vim', 'curl', 'zsh', 'git', 'wget', 'python-dev', 'python-pip', 'nodejs' ]:
       ensure => installed
   }
-
-  package { 'grunt-cli':
-    ensure   => present,
-    provider => 'npm',
-    require  => Package['nodejs']
-  }
-
-  exec { 'install_pip_warper':
-    command =>
-    "${root_bash_prefix} 'pip install virtualenvwrapper'",
-    require => Package["python-pip"]
-  }
 }
 
-class { 'install_basic_packages':
-  stage => ['install_basic_packages']
+class { 'pre_install_packages':
+  stage => ['pre_install_packages']
 }
 
-# --- Setting up Env ----------------------------------------------------------
-class setup_env {
+# --- Pre-setting --------------------------------------------------------------
+class pre_settting {
   # add zsh
   exec { 'user_install_zsh':
     command =>
@@ -72,52 +60,57 @@ class setup_env {
   }
 }
 
-class { 'setup_env':
-  stage => ['install_basic_packages'],
-  require => Class['install_basic_packages']
+class { 'pre_settting':
+  stage => ['pre_install_packages'],
+  require => Class['pre_install_packages']
 }
 
-# --- Install apt-require --------------------------------------------------------
-stage { 'install_apt_require':
+# --- Post-install Packages----------------------------------------------------
+stage { 'post_install_packages':
   before => Stage['main'],
-  require => Stage['install_basic_packages']
+  require => Stage['pre_install_packages']
 }
 
-class install_apt_require {
-  # package { ['libevent-dev', 'libldap2-dev', 'libsasl2-dev', 'mongodb']:
-  #   ensure => 'installed'
-  # }
-}
+class post_install_packages {
+  package { ['libevent-dev', 'libldap2-dev', 'libsasl2-dev', 'mongodb']:
+    ensure => 'installed'
+  }
 
-class { 'install_apt_require':
-  stage => ['install_apt_require']
-}
+  package { 'virtualenvwrapper':
+    ensure   => present,
+    provider => 'pip',
+    require  => Package['python-pip']
+  }
 
-
-# --- Install pip-require --------------------------------------------------------
-stage { 'install_pip_require':
-  before => Stage['main'],
-  require => Stage['install_apt_require']
-}
-
-class install_pip_require {
-
-  exec { 'install_pip_require':
-    command =>
-      "${root_bash_prefix} 'cd /vagrant && \
-      # source /usr/local/bin/virtualenvwrapper.sh  && \
-      # mkvirtualenv app -r /vagrant/pip.require&& \
-      # workon app && \
-      pip install -r /vagrant/pip.require'"
+  package { 'grunt-cli':
+    ensure   => present,
+    provider => 'npm',
+    require  => Package['nodejs']
   }
 }
 
-class { 'install_pip_require':
-  stage => ['install_pip_require']
+class { 'post_install_packages':
+  stage => ['post_install_packages']
+}
+
+
+# --- Post-settings -----------------------------------------------------------
+class post_settings {
+  # exec { 'setting_up_virtualenv':
+  #   command =>
+  #     "${root_bash_prefix} 'cd /vagrant/src && \
+  #     mkvirtualenv app'",
+  #   require => Package['virtualenvwrapper']
+  # }
+}
+
+class { 'post_settings':
+  stage => ['post_install_packages'],
+  require => Class['post_install_packages']
 }
 
 # --- Prepare wrokspace --------------------------------------------------------------
-class prepare_workspace{
+class workspace_settings{
 
   file { 'web_folder':
     path => '/var/www/',
@@ -147,4 +140,4 @@ class prepare_workspace{
   # }
 }
 
-class { 'prepare_workspace': }
+class { 'workspace_settings': }
