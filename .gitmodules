@@ -7,3 +7,6 @@
 [submodule "recipes/modules/nodejs"]
 	path = recipes/modules/nodejs
 	url = https://github.com/puppetlabs/puppetlabs-nodejs.git
+[submodule "recipes/modules/python"]
+	path = recipes/modules/python
+	url = https://github.com/stankevich/puppet-python.git
