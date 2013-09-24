@@ -11,15 +11,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Set the Timezone to something useful
   config.vm.provision :shell, :inline => "echo \"Asia/Taipei\" | sudo tee /etc/timezone && dpkg-reconfigure --frontend noninteractive tzdata"
 
-  config.vm.define :wepapp do |wepapp_config|
+  config.vm.define :nodeapp do |nodeapp_config|
     # Map dev.pyrocms.mysql to this IP
     #config.vm.network :hostonly, "198.18.0.201"
-    wepapp_config.vm.network :forwarded_port, guest: 8080, host: 8180
+    nodeapp_config.vm.network :forwarded_port, guest: 3000, host: 3300
     # Enable Puppet
-    wepapp_config.vm.provision :puppet do |puppet|
+    nodeapp_config.vm.provision :puppet do |puppet|
       puppet.facter = {
-        "fqdn" => "wepapp.dev",
-        "hostname" => "wepapp",
+        "fqdn" => "nodeapp.dev",
+        "hostname" => "nodeapp",
         "docroot" => '/vagrant/www/'
       }
       puppet.manifest_file  = "default.pp"

@@ -26,6 +26,7 @@ class { 'apt_get_update':
   stage => ['pre_update']
 }
 
+
 # --- Pre-install Packages ----------------------------------------------------
 stage { 'pre_install_packages':
   before => Stage['main'],
@@ -33,8 +34,15 @@ stage { 'pre_install_packages':
 }
 
 class pre_install_packages {
-  package { [ 'vim', 'curl', 'zsh', 'git', 'wget', 'python-dev', 'python-pip', 'nodejs' ]:
+  package { [ 'vim', 'curl', 'zsh', 'git', 'wget', 'nodejs' ]:
       ensure => installed
+  }
+
+  class { 'python':
+    version => 'system',
+    dev => true,
+    virtualenv => true,
+    gunicorn => false
   }
 }
 
@@ -42,8 +50,9 @@ class { 'pre_install_packages':
   stage => ['pre_install_packages']
 }
 
-# --- Pre-setting --------------------------------------------------------------
-class pre_settting {
+
+# --- Pre-settings --------------------------------------------------------------
+class pre_setttings {
   # add zsh
   exec { 'user_install_zsh':
     command =>
@@ -58,9 +67,14 @@ class pre_settting {
     command =>
       "${root_bash_prefix} 'chsh -s /usr/bin/zsh root && chsh -s /usr/bin/zsh vagrant'",
   }
+
+  exec { 'root_add_ssh_folder':
+    command =>
+      "${root_bash_prefix} 'mkdir -p /root/.ssh"
+  }
 }
 
-class { 'pre_settting':
+class { 'pre_setttings':
   stage => ['pre_install_packages'],
   require => Class['pre_install_packages']
 }
@@ -76,11 +90,7 @@ class post_install_packages {
     ensure => 'installed'
   }
 
-  package { 'virtualenvwrapper':
-    ensure   => present,
-    provider => 'pip',
-    require  => Package['python-pip']
-  }
+  python::pip { 'virtualenvwrapper': }
 
   package { 'grunt-cli':
     ensure   => present,
@@ -96,22 +106,6 @@ class { 'post_install_packages':
 
 # --- Post-settings -----------------------------------------------------------
 class post_settings {
-  # exec { 'setting_up_virtualenv':
-  #   command =>
-  #     "${root_bash_prefix} 'cd /vagrant/src && \
-  #     mkvirtualenv app'",
-  #   require => Package['virtualenvwrapper']
-  # }
-}
-
-class { 'post_settings':
-  stage => ['post_install_packages'],
-  require => Class['post_install_packages']
-}
-
-# --- Prepare wrokspace --------------------------------------------------------------
-class workspace_settings{
-
   file { 'web_folder':
     path => '/var/www/',
     ensure => 'directory'
@@ -119,25 +113,14 @@ class workspace_settings{
 
   exec { 'link_webapp':
     command =>
-      "${root_bash_prefix} 'rm /var/www/webapp -rf && \
-      ln -s -f /vagrant /var/www/webapp'",
+      "${root_bash_prefix} 'rm /var/www/app -rf && \
+      ln -s -f /vagrant /var/www/app'",
     require => File['web_folder']
   }
-
-  # exec { 'fixture_webapp':
-  #   command =>
-  #     "${root_bash_prefix} 'cd /var/www/webapp && \
-  #     python /var/www/webapp/fixtures.py &'",
-  #   require => Exec['link_webapp']
-  # }
-
-  # exec { 'run_webapp':
-  #   command =>
-  #     "${root_bash_prefix} 'cd /var/www/webapp && \
-  #     # workon webapp && \
-  #     python /var/www/webapp/server.py &'",
-  #   require => Exec['link_webapp']
-  # }
 }
 
-class { 'workspace_settings': }
+class { 'post_settings':
+  stage => ['post_install_packages'],
+  require => Class['post_install_packages']
+}
+
